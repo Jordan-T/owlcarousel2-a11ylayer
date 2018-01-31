@@ -247,10 +247,11 @@
 
     if (!!stage) {
       var offs = stage.offset();
+      var winHeight = $(window).height();
       if (!!targ) {
         window.scrollTo(
           offs.left,
-          offs.top - parseInt($('body').css('padding-top'), 10)
+          offs.top - (winHeight / 2)
         );
       }
 
