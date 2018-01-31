@@ -1,0 +1,19 @@
+{
+  "name": "owlcarousel2-a11ylayer",
+  "version": "0.3.0",
+  "description": "owl carousel 2 accessibility plugin",
+  "main": "owlcarousel2-a11ylayer.js",
+  "repository": "https://github.com/Jordan-T/owlcarousel2-a11ylayer.git",
+  "author": "Jordan-T <jordan.taisne@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "owl.carousel": "^2.2.0"
+  },
+  "keywords": [
+    "responsive",
+    "carousel",
+    "owlcarousel",
+    "jQuery",
+    "plugin"
+  ]
+}

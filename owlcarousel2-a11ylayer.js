@@ -1,7 +1,7 @@
 /**
  * Owl Carousel v2 Accessibility Plugin
- * Version 0.2.1
- * © Geoffrey Roberts 2016
+ * Version 0.3.0
+ * © Jordan Taisne 2018
  */
 
 ;(function($, window, document){
@@ -49,7 +49,7 @@
    * Adds support for things that don't map nicely to the root object
    * such as event handlers.
    */
-  Owl2A11y.eventHandlers = {};
+  // Owl2A11y.eventHandlers = {};
 
   /**
    * Get a callback for keyup events within this carousel.
@@ -65,13 +65,13 @@
       action = null;
 
       if (!!targ) {
-        if (e.keyCode == 37 || e.keyCode == 38) {
+        if (e.keyCode === 37 || e.keyCode === 38) {
           action = 'prev.owl.carousel';
         }
-        else if (e.keyCode == 39 || e.keyCode == 40) {
+        else if (e.keyCode === 39 || e.keyCode === 40) {
           action = 'next.owl.carousel';
         }
-        else if (e.keyCode == 13) {
+        else if (e.keyCode === 13) {
           if (eventTarg.hasClass('owl-prev')) action = 'prev.owl.carousel';
           else if (eventTarg.hasClass('owl-next')) action = 'next.owl.carousel';
           else if (eventTarg.hasClass('owl-dot')) action = 'click';
@@ -101,7 +101,8 @@
   Owl2A11y.prototype.setupKeyboard = function(){
     // Only needed to initialise once for the entire document
     if (!this.$element.attr('data-owl-access-keyup')) {
-      this.$element.bind('keyup', this.getDocumentKeyUp())
+      this.documentKeyUp = this.getDocumentKeyUp();
+      this.$element.on('keyup.owl.a11y', this.documentKeyUp)
       .attr('data-owl-access-keyup', '1');
     }
     this.$element.attr('data-owl-carousel-focusable', '1');
@@ -112,12 +113,12 @@
    */
   Owl2A11y.prototype.setupFocus = function(){
     // Only needed to initialise once for the entire document
-    this.$element.bind('focusin', function(){
+    this.$element.on('focusin.owl.a11y', function(){
       $(this).attr({
         'data-owl-carousel-focused': '1',
         'aria-live': 'polite'
       }).trigger('stop.owl.autoplay');
-    }).bind('focusout', function(){
+    }).on('focusout.owl.a11y', function(){
       $(this).attr({
         'data-owl-carousel-focused': '0',
         'aria-live': 'off'
@@ -147,9 +148,9 @@
    * Assign attributes to the root element.
    */
   Owl2A11y.prototype.destroy = function() {
-    this.$element.unbind('keyup', this.eventHandlers.documentKeyUp)
+    this.$element.off('keyup.owl.a11y', this.documentKeyUp)
     .removeAttr('data-owl-access-keyup data-owl-carousel-focusable')
-    .unbind('focusin focusout');
+    .off('focusin.owl.a11y focusout.owl.a11y');
   };
 
 
@@ -158,7 +159,7 @@
   /**
    * Identifies all focusable elements within a given element.
    *
-   * @param DOMElement elem
+   * @param {HTMLElement} elem
    *   A DOM element.
    *
    * @return jQuery
@@ -171,23 +172,23 @@
   /**
    * Identifies all focusable elements within a given element.
    *
-   * @param jQeury elems
+   * @param {jQuery} elems
    *   A jQuery object that may refer to zero or more focusable elements.
-   * @param boolean enable
+   * @param {boolean} enable
    *   Whether focus is to be enabled on these elements or not.
    */
   Owl2A11y.prototype.adjustFocus = function(elems, enable){
     elems.each(function(){
       var item = $(this);
-      var newTabIndex = '0',
-      storeTabIndex = '0';
+      var newTabIndex = '0';
+      // var storeTabIndex = '0';
 
-      currentTabIndex = item.attr('tabindex'),
-      storedTabIndex = item.attr('data-owl-temp-tabindex');
+      var currentTabIndex = item.attr('tabindex');
+      var storedTabIndex = item.attr('data-owl-temp-tabindex');
 
       if (enable) {
         newTabIndex = (
-          typeof(storedTabIndex) != 'undefined' && (storedTabIndex != '-1') ?
+          typeof(storedTabIndex) !== 'undefined' && (storedTabIndex !== '-1') ?
           item.attr('data-owl-temp-tabindex') :
           '0'
         );
@@ -196,7 +197,7 @@
       else {
         newTabIndex = '-1';
         storedTabIndex = (
-          (typeof(currentTabIndex) != 'undefined') || (currentTabIndex != '-1') ?
+          (typeof(currentTabIndex) !== 'undefined') || (currentTabIndex !== '-1') ?
           currentTabIndex :
           '0'
         );
@@ -204,7 +205,7 @@
 
       item.attr({
         tabindex: newTabIndex,
-        'data-owl-temp-tabindex': storeTabIndex
+        'data-owl-temp-tabindex': storedTabIndex
       });
     });
   };
@@ -212,15 +213,15 @@
   /**
    * Get the root element if we are focused within it.
    *
-   * @param DOMElement targ
+   * @param {HTMLElement} targ
    *   An element that might be within this carousel.
    *
    * @return mixed
    *   Either the jQuery element containing the root element, or NULL.
    */
   Owl2A11y.prototype.focused = function(targ){
-    var targ = $(targ);
-    if (targ.attr('data-owl-carousel-focused') == 1) {
+    targ = $(targ);
+    if (targ.attr('data-owl-carousel-focused') === "1") {
       return targ;
     }
     var closest = targ.closest('[data-owl-carousel-focused="1"]');
@@ -235,10 +236,9 @@
    * Identify active elements, set WAI-ARIA sttributes accordingly,
    * scroll to show element if we need to, and set up focusing.
    *
-   * @param Event e
    *   The triggering event.
    */
-  Owl2A11y.prototype.setCurrent = function(e) {
+  Owl2A11y.prototype.setCurrent = function() {
     var targ = this.focused($(':focus')),
     element = this._core.$element,
     stage = this._core.$stage,
@@ -254,7 +254,7 @@
         );
       }
 
-      this._core.$stage.children().each(function(i) {
+      this._core.$stage.children().each(function() {
         var item = $(this);
         var focusable = focusableElems(this);
 
@@ -275,9 +275,17 @@
         // Focus on the root element after we're done moving,
         // but only if we're not using the controls.
         setTimeout(function(){
+          var focus = $(':focus');
+          // break if no slider focus
+          if(focus.closest(element).length === 0) {
+            return;
+          }
+
+          // focus root element if hidden item or not nav item
           var newFocus = element;
-          if ($(':focus').closest('.owl-controls').length) {
-            newFocus = $(':focus');
+          var item = focus.closest(stage.children('[aria-hidden="false"]'));
+          if (focus.closest(item).length !== 0 || focus.closest('.owl-nav,.owl-dot').length !== 0) {
+            newFocus = focus;
           }
           newFocus.focus();
         }, 250);
